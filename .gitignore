@@ -1,3 +1,9 @@
+# build, release, settings folders
+.vs/
+x64/
+raycast-engine-sfml/
+*.sln
+
 # Prerequisites
 *.d
 
