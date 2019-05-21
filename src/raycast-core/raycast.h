@@ -2,53 +2,101 @@
 #ifndef RAYCAST_H
 #define RAYCAST_H
 
-#include <math.h>
-#include <stdbool.h>
-#include <limits.h>
-#include <SFML/graphics.hpp>
+#include <utility> 
+using std::pair;
+#include <vector>
+#include "map_node.h"
+#include "graphics.h"
 
-#define SCREEN_SIZE_X sf::VideoMode::getFullscreenModes()[0].width
-#define SCREEN_SIZE_Y sf::VideoMode::getFullscreenModes()[0].height
-#define FOV 60.0
-#define RAY_ANGLE_INC (FOV/SCREEN_SIZE_X)
+namespace rc
+{
+	// if point is out of map bounds, x = y = INT_MAX
+	struct point
+	{
+		int x, y;
+		point(int _x, int _y) : x(_x), y(_y) {}
+	};
 
-#ifndef M_PI
-#    define M_PI 3.14159265358979323846
-#endif
+	// if grid point is out of map bounds, x = y = INT_MAX
+	struct grid_point
+	{
+		int x, y;
+		grid_point(int _x, int _y) : x(_x), y(_y) {}
+		grid_point(point pt, int grid_factor) : x(pt.x >> grid_factor), y(pt.y >> grid_factor) {}
+	};
 
-#define sind(x) (sin((x) * M_PI / 180))
-#define cosd(x) (cos((x) * M_PI / 180))
-#define tand(x) (tan((x) * M_PI / 180))
+	struct ray
+	{
+		point origin;
+		double angle;
+		ray(point _origin, double _angle) : origin(_origin), angle(_angle) {}
+	};
 
-// if point is out of map bounds, x = y = INT_MAX
-struct point {
-	int x;
-	int y;
-	point(int _x, int _y) : x(_x), y(_y) {}
-};
+	class raycast_engine
+	{
+	private:
 
-// if grid point is out of map bounds, x = y = INT_MAX
-struct grid_point {
-	int x;
-	int y;
-	grid_point(int _x, int _y) : x(_x), y(_y) {}
-};
+		// emits a ray from first intersection with the grid, and traces it until it hits either a wall or goes out of bounds
+		// if the ray goes out of bounds, return point(INT_MAX, INT_MAX)
+		// else return the unit coordinates of the location where wall was found
+		point emit_and_trace_ray(point first_grid_intersection, int offset_x, int offset_y);
 
-// if slice does not exist at this location, size = location = INT_MAX
-struct slice_info {
-	int size;
-	int location;
-	// additional texture info can be inserted here later
-	slice_info(int _size, int _location) : size(_size), location(_location) {}
-};
+		// utility fn to convert a polar distance to a cartesian distance
+		double inline reverse_fishbowl(double polar_distance);
 
-point find_closest_horizontal_wall_intersection(int playerX, int playerY);
+		// returns whether pt is out of map bounds or not
+		bool outside_map_bounds(point pt);
 
-point find_closest_vertical_wall_intersection(int playerX, int playerY);
+		// screen dimensions
+		unsigned int SCREEN_SIZE_X, SCREEN_SIZE_Y;
 
-// if no wall exists at this ray, returns 0
-double find_closest_distance_to_wall(int playerX, int playerY, point& horiz_intersection, point& vert_intersection);
+		// map grid dimensions
+		unsigned int GRID_SIZE_X, GRID_SIZE_Y;
 
-slice_info cast_ray(int playerX, int playerY, double player_angle, int screen_column);
+		// 1 grid block = 2^(GRID_FACTOR) player coords
+		unsigned int GRID_FACTOR;
+
+		// player field of view in degrees
+		double FIELD_OF_VIEW;
+
+		map_node ** MAP_DATA;
+
+		// array of all textures used by the engine
+		std::vector<texture> WALL_TEXTURES;
+
+	public:
+
+		raycast_engine(unsigned int screen_size_x, unsigned int screen_size_y, 
+			unsigned int map_grid_size_x, unsigned int map_grid_size_y, unsigned int grid_factor, 
+			double field_of_view);
+
+		virtual ~raycast_engine();
+
+		// the sizes of each of these arrays must be map_grid_size_x * map_grid_size_y
+		// texture_index is the index into WALL_TEXTURES where the texture for this face of the wall can be found
+		// left, right, front and back are each face of the wall
+		void create_map(bool ** wall_arr, texture_index ** left_tex_arr, texture_index ** right_tex_arr,
+			texture_index ** front_tex_arr, texture_index ** back_tex_arr);
+
+		double get_slice_angle();
+
+		void set_field_of_view();
+
+		// adds texture to array of renderable textures
+		void add_wall_texture(texture wall_texture);
+
+		// creates a texture from the image, and adds it to array of 
+		// renderable textures, at full resolution
+		void add_wall_texture(const uint8_t * wall_image, unsigned int image_size);
+
+		point find_closest_horizontal_intersection_on_ray(ray ray);
+
+		point find_closest_vertical_intersection_on_ray(ray ray);
+
+		point find_closest_intersection_on_ray(ray ray);
+
+		slice cast_ray(point player_pos, double player_angle, int screen_column);
+	};
+}
 
 #endif // RAYCAST_H
