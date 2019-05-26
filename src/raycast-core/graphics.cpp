@@ -6,9 +6,8 @@ namespace rc {
 
 		texture::texture(unsigned int texture_square_size) {
 			square_size = texture_square_size;
-			num_pixels = square_size * square_size;
 			// color_arr is a flattened 2D array of colors
-			color_arr = new color[num_pixels];
+			color_arr = new color[square_size * square_size];
 		}
 
 		texture::texture(const texture & rhs) {
@@ -101,9 +100,9 @@ namespace rc {
 			if (rhs_color_arr != nullptr) {
 
 				// copy over the color array from rhs
-				lhs_color_arr = new color[rhs.num_pixels];
+				lhs_color_arr = new color[rhs.get_num_pixels()];
 
-				for (unsigned int i = 0; i < rhs.num_pixels; ++i) {
+				for (unsigned int i = 0; i < rhs.get_num_pixels(); ++i) {
 					lhs_color_arr[i] = color(rhs_color_arr[i].r,
 						rhs_color_arr[i].g, rhs_color_arr[i].b, rhs_color_arr[i].a);
 				}
@@ -121,6 +120,10 @@ namespace rc {
 
 		const color * texture::get_color_array() const {
 			return color_arr;
+		}
+
+		const unsigned int texture::get_num_pixels() const {
+			return square_size * square_size;
 		}
 
 		uint8_t * texture::get_rgba_array() {

@@ -36,10 +36,8 @@ namespace rc {
 		class texture {
 		private:
 
-			// size of 2d square matrix color_arr
+			// size of single dimension of color_arr
 			unsigned int square_size;
-			// number of pixels in the image
-			unsigned int num_pixels;
 			// 2D color array of all colors that make up this texture
 			color * color_arr;
 
@@ -71,6 +69,9 @@ namespace rc {
 
 			// get the color array
 			const color * get_color_array() const;
+
+			// num_pixels = square_size * square_size
+			const unsigned int get_num_pixels() const;
 
 			// get an rgba array from the color array
 			uint8_t * get_rgba_array();
