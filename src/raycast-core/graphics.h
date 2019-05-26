@@ -4,53 +4,78 @@
 
 #include <stdint.h>
 
-namespace rc 
-{
-	// if slice does not exist at this location, size = location = INT_MAX
-	struct slice
-	{
-		int size, location;
-		// additional texture info can be inserted here later
-		slice(int _size, int _location) : size(_size), location(_location) {}
-	};
+namespace rc {
+	namespace graphics {
 
-	struct pixel_color
-	{
-		uint8_t r, g, b, a;
-		pixel_color(uint8_t _r, uint8_t _g,
-			uint8_t _b, uint8_t _a = 255) : r(_r), g(_g), b(_b), a(_a) {}
-	};
+		struct color {
+			uint8_t r, g, b, a;
+			color(uint8_t _r, uint8_t _g,
+				uint8_t _b, uint8_t _a = 255) : r(_r), g(_g), b(_b), a(_a) {
+			}
+			color() {
+				r = g = b = a = 0;
+			}
+		};
 
-	class texture
-	{
-	private:
+		// if slice does not exist at this location, size = location = INT_MAX
+		struct slice {
+			// size along screen Y
+			unsigned int size;
 
-		// size of 2d square matrix color_arr
-		unsigned int texture_res;
-		// 2D color array of all colors that make up this texture
-		pixel_color ** color_arr;
+			// location of slice along screen X
+			unsigned int location;
 
-	public:
+			// array of color to be rendered for this slice (exactly _size in size)
+			const color * texture_data;
 
-		// texture_res should be at most 2^(grid_factor)
-		// higher resolutions will not be distinguishable
-		texture(unsigned int texture_res);
+			slice(unsigned int _size, unsigned int _location, const color * _texture_data) : size(_size),
+				location(_location), texture_data(_texture_data) {
+			}
+		};
 
-		texture(const texture & rhs);
+		class texture {
+		private:
 
-		// image here is an array of RGBA pixels made of 8 bit int components
-		// image_size is the size of the square image in pixels
-		// if image_size is larger than texture resolution then the image is downsampled
-		// the largest square part of the image is loaded as the texture
-		void load_from_image(const uint8_t * image, unsigned int image_size);
+			// size of 2d square matrix color_arr
+			unsigned int square_size;
+			// number of pixels in the image
+			unsigned int num_pixels;
+			// 2D color array of all colors that make up this texture
+			color * color_arr;
 
-		virtual ~texture();
+			uint8_t * create_rgba_array_from_color_array(const color * color_arr, unsigned int size);
+			color * create_color_array_from_rgba_array(const uint8_t * rgba_arr, unsigned int size);
 
-		void copy_from(const texture & rhs);
+			void delete_color_arr();
 
-		// return color_arr
-		const pixel_color ** get_color_array();
-	};
+		public:
+
+			// square_size should be at most 2^(grid_factor)
+			// higher resolutions will not be distinguishable
+			texture(unsigned int texture_square_size);
+
+			// creates a deep copy of this texture
+			texture(const texture & rhs);
+
+			virtual ~texture();
+
+			// image_rgba_arr here is an array of RGBA pixels made of 8 bit int components
+			// image_size is the size of the square image in pixels (i.e. image_rgb_arr 
+			// is 4*image_size^2 in size)
+			// if image_size is != texture size then the image is downsampled or interpolated
+			// the largest square part of the image is loaded as the texture
+			void load_from_rgba_array(const uint8_t * image_rgba_arr, unsigned int image_size);
+
+			// creates a deep copy of this texture
+			void copy_from(const texture & rhs);
+
+			// get the color array
+			const color * get_color_array() const;
+
+			// get an rgba array from the color array
+			uint8_t * get_rgba_array();
+		};
+	}
 }
 
 
