@@ -1,5 +1,6 @@
 #include "graphics.h"
 #include "utilities.h"
+#include <functional>
 
 namespace rc {
 	namespace graphics {
@@ -71,13 +72,17 @@ namespace rc {
 
 				color * new_color_arr;
 
+				// temporary so that it compiles
+				std::function<color *(const color & lhs, const color & rhs, unsigned int num_elems_between)> interpolator;
+				std::function<color(const color ** arr_to_be_squashed, unsigned int arr_size)> downsampler;
+
 				if (image_size > square_size) {
 					// downsample the color array to bring down to size
-					new_color_arr = utilities::downsample2d(temp_color_arr, image_size, image_size, square_size, square_size);
+					new_color_arr = utilities::downsample2d(temp_color_arr, image_size, image_size, square_size, square_size, downsampler);
 				}
 				else {
 					// interpolate the color array to bring up to size
-					new_color_arr = utilities::interpolate2d(temp_color_arr, image_size, image_size, square_size, square_size);
+					new_color_arr = utilities::interpolate2d(temp_color_arr, image_size, image_size, square_size, square_size, interpolator);
 				}
 
 				delete[] temp_color_arr;
