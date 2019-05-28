@@ -2,20 +2,18 @@
 #ifndef MAP_NODE_H
 #define MAP_NODE_H
 
-namespace rc
-{
+namespace rc {
 	// index into the WALL_TEXTURES array where the texture resides
 	typedef unsigned int texture_index;
 
-	struct map_node 
-	{
+	struct map_node {
 		bool wall_present;
 		// textures to show on each 
-		texture_index left;
-		texture_index right;
-		texture_index front;
-		texture_index back;
+		texture_index left_tex;
+		texture_index right_tex;
+		texture_index front_tex;
+		texture_index back_tex;
 	};
 }
 
-#endif
+#endif // MAP_NODE_H
